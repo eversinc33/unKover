@@ -69,7 +69,6 @@ VOID
 UkRundownAPC(_In_ PRKAPC Apc)
 {
 	ExFreePoolWithTag(Apc, POOL_TAG);
-	KeSetEvent(&g_rundownApcSyncEvent, 0, FALSE);
 }
 
 VOID 
@@ -91,6 +90,7 @@ UkCaptureStackAPC(
 	if (!stackFrames)
 	{
 		// Signal that APC is done
+		ExFreePoolWithTag(Apc, POOL_TAG);
 		KeSetEvent(&g_kernelApcSyncEvent, 0, FALSE);
 		return;
 	}
@@ -102,29 +102,28 @@ UkCaptureStackAPC(
 	// Stack trace analysis
 	for (auto i = 0; i < framesCaptured; ++i)
 	{
-		ULONG_PTR address = (ULONG_PTR)stackFrames[i];
-
-		// Get name of driver corresponding to address
-		PKLDR_DATA_TABLE_ENTRY driver = UkGetDriverForAddress(address);
-
-#ifdef LOG_STACK_FRAMES
-		if (driver == NULL)
+		// Check if address of frame is from unbacked memory
+		ULONG_PTR addr = (ULONG_PTR)stackFrames[i];
+		if (UkGetDriverForAddress(addr) == NULL)
 		{
-			LOG_MSG("  [%d] Stack frame %lu: 0x%llx // %ws\n", HandleToUlong(threadId), i, address, L"??? <------ Unbacked!");
-		}
-		else
-		{
-			auto offsetToFunction = (driver == NULL) ? address : (address - (ULONG_PTR)driver->DllBase);
-			PWCHAR driverName = driver->BaseDllName.Buffer;
-			LOG_MSG("  [%d] Stack frame %lu: 0x%llx+0x%llx // %ws\n", HandleToUlong(threadId), i, (ULONG_PTR)driver->DllBase, offsetToFunction, driverName);
-		}
-#endif
-
-		// Check if address is from unbacked memory
-		if (driver == NULL)
-		{
-			LOG_MSG("[APCStackWalk] -> Detected stack frame pointing to unbacked region: TID: %lu @ 0x%llx\n", HandleToUlong(threadId), address);
-			LOG_MSG("  [%d] Stack frame %lu: 0x%llx // %ws\n", HandleToUlong(threadId), i, address, L"??? <------ Unbacked!");
+			LOG_MSG("[APCStackWalk] -> Detected stack frame pointing to unbacked region: TID: %lu @ 0x%llx\n", HandleToUlong(threadId), addr);
+			
+			// Print stack frame TODO: clean this code
+			for (auto j = 0; j < framesCaptured; ++j)
+			{
+				ULONG_PTR address = (ULONG_PTR)stackFrames[j];
+				PKLDR_DATA_TABLE_ENTRY driver = UkGetDriverForAddress(address);
+				if (driver == NULL) 
+				{ 
+					LOG_MSG("  [%d] Stack frame %lu: 0x%llx // %ws\n", HandleToUlong(threadId), j, address, L"??? <------ Unbacked!"); 
+				}
+				else 
+				{
+					auto offsetToFunction = (driver == NULL) ? address : (address - (ULONG_PTR)driver->DllBase);
+					PWCHAR driverName = driver->BaseDllName.Buffer;
+					LOG_MSG("  [%d] Stack frame %lu: 0x%llx+0x%llx // %ws\n", HandleToUlong(threadId), j, (ULONG_PTR)driver->DllBase, offsetToFunction, driverName);
+				}
+			}
 		}
 	}
 
@@ -146,7 +145,6 @@ UkAPCStackWalk(IN PVOID StartContext)
 
 	KeInitializeEvent(&g_apcFinishedEvent, NotificationEvent, FALSE);
 	KeInitializeEvent(&g_kernelApcSyncEvent, NotificationEvent, FALSE);
-	KeInitializeEvent(&g_rundownApcSyncEvent, NotificationEvent, FALSE);
 
 	do
 	{
@@ -193,13 +191,19 @@ UkAPCStackWalk(IN PVOID StartContext)
 			{
 				LOG_MSG("KeInsertQueueApc failed\n");
 				KeSetEvent(&g_kernelApcSyncEvent, 0, FALSE);
+				KeSetEvent(&g_rundownApcSyncEvent, 0, FALSE);
 			}
 
-			// Wait for event to signal that the apc is done before queueing the next one, at least sleep for 10 milliseconds
-			UkSleepMs(10);
-			KeWaitForSingleObject(&g_kernelApcSyncEvent, Executive, KernelMode, FALSE, NULL);
-			KeWaitForSingleObject(&g_rundownApcSyncEvent, Executive, KernelMode, FALSE, NULL);
-			KeSetEvent(&g_kernelApcSyncEvent, 0, FALSE);
+			// Wait for event to signal that the apc is done before queueing the next one
+			UkSleepMs(50);
+			LARGE_INTEGER timeout;
+			timeout.QuadPart = 2000;
+			NtStatus = KeWaitForSingleObject(&g_kernelApcSyncEvent, Executive, KernelMode, FALSE, &timeout);
+			if (NtStatus == STATUS_TIMEOUT)
+			{
+				LOG_MSG("APC did not return before timeout (tid: %ul)\n", tid);
+			}
+			KeResetEvent(&g_kernelApcSyncEvent);
 
 			// Clean up
 			if (ThreadObj) { ObDereferenceObject(ThreadObj); }

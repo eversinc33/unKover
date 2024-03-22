@@ -13,9 +13,8 @@ HANDLE g_hCheckDriverObjects;
 HANDLE g_hAPCCheck;
 
 VOID 
-UkShutdownThread(BOOLEAN* pStop, PHANDLE pThreadHandle, PKEVENT pFinishedEvent)
+UkShutdownThread(PHANDLE pThreadHandle, PKEVENT pFinishedEvent)
 {
-	*pStop = FALSE;
 	KeWaitForSingleObject(pFinishedEvent, Executive, KernelMode, FALSE, NULL);
 	if (pThreadHandle)
 	{
@@ -31,10 +30,14 @@ DriverUnload(PDRIVER_OBJECT drvObj)
 	LOG_MSG("Unload called\n");
 	LOG_MSG("Stopping all threads. This can a few seconds...\n");
 
-	UkShutdownThread(&g_doAPCStackWalk, &g_hAPCCheck, &g_apcFinishedEvent);
-	UkShutdownThread(&g_sendNmis, &g_hSendNmis, &g_sendNmisFinishedEvent);
-	UkShutdownThread(&g_scanSystemThreads, &g_hScanSystemThreads, &g_scanSystemThreadsFinishedEvent);
-	UkShutdownThread(&g_scanDriverObjects, &g_hCheckDriverObjects, &g_scanDriverObjectsFinishedEvent);
+	g_doAPCStackWalk = FALSE;
+	g_sendNmis = FALSE;
+	g_scanSystemThreads = FALSE;
+	g_scanDriverObjects = FALSE;
+	UkShutdownThread(&g_hAPCCheck, &g_apcFinishedEvent);
+	UkShutdownThread(&g_hSendNmis, &g_sendNmisFinishedEvent);
+	UkShutdownThread(&g_hScanSystemThreads, &g_scanSystemThreadsFinishedEvent);
+	UkShutdownThread(&g_hCheckDriverObjects, &g_scanDriverObjectsFinishedEvent);
 
 	// Wait 5 seconds for termination
 	UkSleepMs(5000);

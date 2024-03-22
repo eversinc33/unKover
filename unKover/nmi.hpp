@@ -68,7 +68,7 @@ UkAnalyzeNmiData()
 		PETHREAD ThreadObj = NULL;
 		NMI_CONTEXT nmiContext = g_NmiContext[core];
 
-		LOG_DBG("NMI callback data: TID: %ul\n", nmiContext.threadId);
+		LOG_DBG("NMI callback data: TID: %l\n", nmiContext.threadId);
 
 		if (nmiContext.threadId == 0)
 		{
@@ -89,7 +89,7 @@ UkAnalyzeNmiData()
 
 			if (driver == NULL)
 			{
-				LOG_MSG("[NmiCallback] -> Detected stack frame pointing to unbacked region. TID: %ul @ 0x%llx", nmiContext.threadId, addr);
+				LOG_MSG("[NmiCallback] -> Detected stack frame pointing to unbacked region. TID: %u @ 0x%llx", nmiContext.threadId, addr);
 			
 				// Print stack frame TODO: clean this code
 				for (auto j = 0; j < nmiContext.framesCaptured; ++j)

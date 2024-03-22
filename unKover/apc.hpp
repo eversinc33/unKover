@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ntddk.h>
-#include "autolock.hpp"
 #include "meta.hpp"
 #include "utils.hpp"
 

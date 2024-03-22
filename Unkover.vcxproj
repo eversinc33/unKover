@@ -103,7 +103,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="unKover\apc.hpp" />
-    <ClInclude Include="unKover\autolock.hpp" />
     <ClInclude Include="unKover\deviceobjects.hpp" />
     <ClInclude Include="unKover\meta.hpp" />
     <ClInclude Include="unKover\nmi.hpp" />

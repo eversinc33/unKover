@@ -3,7 +3,6 @@
 #include "meta.hpp"
 #include "nmi.hpp"
 #include "threads.hpp"
-#include "autolock.hpp"
 #include "apc.hpp"
 #include "deviceobjects.hpp"
 
@@ -97,6 +96,7 @@ extern "C"
 
 		// TODO: check physmem handles
 		// TODO: compare drivers on disk to mem
+		// TODO: compare PIDs in PspCidTable and EPROCESS linked list to check for potentially hiding threads
 		// TODO: more
 
 		return NtStatus;

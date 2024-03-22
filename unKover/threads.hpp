@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ntddk.h>
-#include "autolock.hpp"
 #include "utils.hpp"
 
 BOOLEAN g_scanSystemThreads = TRUE;

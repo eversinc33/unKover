@@ -2,7 +2,6 @@
 
 #include <ntddk.h>
 #include "meta.hpp"
-#include "autolock.hpp"
 #include <intrin.h>
 #include "utils.hpp"
 

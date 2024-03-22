@@ -29,9 +29,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="unKover\autolock.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="unKover\meta.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

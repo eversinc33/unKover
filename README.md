@@ -34,3 +34,5 @@ Then you can load the driver with `sc.exe` or use OSR DriverLoader:
 sc create Unkover binPath= "C:\path\to\Unkover.sys" type= kernel start= demand
 sc.exe start Unkover
 ```
+
+Afterwards, output will appear in the debug logs (view with e.g. WinDbg or DebugView)

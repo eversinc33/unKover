@@ -151,7 +151,7 @@ UkAPCStackWalk(IN PVOID StartContext)
 		LOG_DBG("Scanning running system thread call stacks via APC...\n");
 
 		// Queue APCs to system threads. TIDs are a multiple of 4. TODO: max number?
-		for (ULONG tid = 4; tid < 0xFFFF; tid += 4)
+		for (auto tid = 4; tid < 0xFFFF; tid += 4)
 		{
 			PETHREAD ThreadObj;
 			PKAPC apc;
@@ -201,7 +201,7 @@ UkAPCStackWalk(IN PVOID StartContext)
 			NtStatus = KeWaitForSingleObject(&g_kernelApcSyncEvent, Executive, KernelMode, FALSE, &timeout);
 			if (NtStatus == STATUS_TIMEOUT)
 			{
-				LOG_DBG("APC did not return before timeout (tid: %ul)\n", tid);
+				LOG_DBG("APC did not return before timeout (tid: %u)\n", tid);
 			}
 			KeResetEvent(&g_kernelApcSyncEvent);
 

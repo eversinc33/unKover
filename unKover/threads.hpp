@@ -9,8 +9,6 @@ KEVENT g_scanSystemThreadsFinishedEvent;
 
 /**
  * Scans all system threads for memory that is not backed by a module on disk.
- * 
- * Original credit: https://www.unknowncheats.me/forum/anti-cheat-bypass/569165-kernel-anticheat-check-detection-vectors.html 
  */
 VOID 
 UkScanSystemThreads(IN PVOID StartContext)
@@ -23,8 +21,8 @@ UkScanSystemThreads(IN PVOID StartContext)
 	{
 		LOG_DBG("Scanning running system threads...\n");
 
-		// Scan system threads. TIDs are a multiple of 4
-		for (ULONG tid = 4; tid < 0x30000; tid += 4)
+		// Scan system threads. TIDs are a multiple of 4 TODO: max number?
+		for (auto tid=4; tid<0xFFFF; tid += 4)
 		{
 			PETHREAD ThreadObj;
 

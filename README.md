@@ -40,4 +40,3 @@ Afterwards, output will appear in the debug logs (view with e.g. WinDbg or Debug
 ### Credits
 
 * DeviceObject scanning code partly taken from https://github.com/not-wlan/driver-hijack
-* 

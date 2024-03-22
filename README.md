@@ -11,4 +11,26 @@ Techniques implemented:
 * System thread analysis: Periodically check all system threads for start-addresses pointing to unbacked memory.
 * Driver Object analysis: Periodically check all driver objects registered on the system, and check if their DriverEntry points to unbacked memory.
 
+<p align="center">
+<img src="./img/detect.jpg" alt="unKover output" width="600"/>
+</p>
+
 So far its quite trivial to bypass these, especially given the implementations :) Hopefully that will change in the future.
+
+## Installation
+
+You need to enable testsigning to load the driver. I also recommend to enable debugging for the kernel.
+
+Run the following from an administrative prompt and reboot afterwards:
+
+```cmd
+bcdedit /set testsigning on
+bcdedit /debug on
+```
+
+Then you can load the driver with `sc.exe` or use OSR DriverLoader:
+
+```cmd
+sc create Unkover binPath= "C:\path\to\Unkover.sys" type= kernel start= demand
+sc.exe start Unkover
+```

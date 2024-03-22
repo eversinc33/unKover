@@ -1,8 +1,8 @@
 # unKover
 
-A PoC anti-rootkit that can detect drivers mapped to kernel memory. The idea is to have a small & concise anti-rootkit to aid you (the rootkit dev) in honing your rootkits evasion abilities while also showcasing detection vectors with minimal FP rate that can detect many of the openly available driver mapper + rootkit combinations.
+A PoC anti-rootkit that can detect drivers mapped to kernel memory. The idea is to have a small & concise anti-rootkit to aid you (the rootkit dev) in honing your rootkits evasion abilities while also showcasing detection vectors with minimal FP rate that can detect many of the openly available driver mapper + rootkit combinations. Think [Moneta](https://github.com/forrest-orr/moneta), but for the kernel (obviously this is a simplified comparison).
 
-While some open source anti-cheats with capabilities far beyond this tool's exist, I wanted something that I can easily tweak according to my needs. Maybe it will be useful for you too.
+While some open source anti-cheats with capabilities far beyond this tool's exist (such as donnaskiez [ac](https://github.com/donnaskiez/ac)), I wanted something that I can easily tweak according to my needs. Maybe it will be useful for you too.
 
 Techniques implemented:
 
@@ -36,3 +36,8 @@ sc.exe start Unkover
 ```
 
 Afterwards, output will appear in the debug logs (view with e.g. WinDbg or DebugView)
+
+### Credits
+
+* DeviceObject scanning code partly taken from https://github.com/not-wlan/driver-hijack
+* 

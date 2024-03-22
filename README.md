@@ -33,7 +33,7 @@ bcdedit /debug on
 Then you can load the driver with `sc.exe` or use OSR DriverLoader:
 
 ```cmd
-sc create Unkover binPath= "C:\path\to\Unkover.sys" type= kernel start= demand
+sc.exe create Unkover binPath= "C:\path\to\Unkover.sys" type= kernel start= demand
 sc.exe start Unkover
 ```
 

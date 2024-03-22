@@ -12,7 +12,7 @@ Techniques implemented:
 * Driver Object analysis: Periodically check all driver objects registered on the system, and check if their DriverEntry points to unbacked memory.
 
 <p align="center">
-<img src="./img/detect.jpg" alt="unKover output" width="600"/>
+<img src="./img/detect.jpg" alt="unKover output"/>
 </p>
 
 So far its quite trivial to bypass these, especially given the implementations :) Hopefully that will change in the future.

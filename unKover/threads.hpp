@@ -21,7 +21,7 @@ UkScanSystemThreads(IN PVOID StartContext)
 
 	do
 	{
-		LOG_MSG("Scanning running system threads...\n");
+		LOG_DBG("Scanning running system threads...\n");
 
 		// Scan system threads. TIDs are a multiple of 4
 		for (ULONG tid = 4; tid < 0x30000; tid += 4)

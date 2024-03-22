@@ -148,7 +148,7 @@ UkAPCStackWalk(IN PVOID StartContext)
 
 	do
 	{
-		LOG_MSG("Scanning running system thread call stacks via APC...\n");
+		LOG_DBG("Scanning running system thread call stacks via APC...\n");
 
 		// Queue APCs to system threads. TIDs are a multiple of 4. TODO: max number?
 		for (ULONG tid = 4; tid < 0xFFFF; tid += 4)
@@ -189,7 +189,7 @@ UkAPCStackWalk(IN PVOID StartContext)
 			NtStatus = KeInsertQueueApc(apc, NULL, NULL, IO_NO_INCREMENT);
 			if (!NT_SUCCESS(NtStatus))
 			{
-				LOG_MSG("KeInsertQueueApc failed\n");
+				LOG_DBG("KeInsertQueueApc failed\n");
 				KeSetEvent(&g_kernelApcSyncEvent, 0, FALSE);
 				KeSetEvent(&g_rundownApcSyncEvent, 0, FALSE);
 			}
@@ -201,7 +201,7 @@ UkAPCStackWalk(IN PVOID StartContext)
 			NtStatus = KeWaitForSingleObject(&g_kernelApcSyncEvent, Executive, KernelMode, FALSE, &timeout);
 			if (NtStatus == STATUS_TIMEOUT)
 			{
-				LOG_MSG("APC did not return before timeout (tid: %ul)\n", tid);
+				LOG_DBG("APC did not return before timeout (tid: %ul)\n", tid);
 			}
 			KeResetEvent(&g_kernelApcSyncEvent);
 

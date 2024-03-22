@@ -27,8 +27,8 @@ DriverUnload(PDRIVER_OBJECT drvObj)
 {
 	UNREFERENCED_PARAMETER(drvObj);
 
-	LOG_MSG("Unload called\n");
-	LOG_MSG("Stopping all threads. This can a few seconds...\n");
+	LOG_DBG("Unload called\n");
+	LOG_DBG("Stopping all threads. This can a few seconds...\n");
 
 	g_doAPCStackWalk = FALSE;
 	g_sendNmis = FALSE;
@@ -53,7 +53,7 @@ extern "C"
 	{
 		UNREFERENCED_PARAMETER(regPath);
 
-		LOG_MSG("unKover driver entry\n");
+		LOG_DBG("unKover driver entry\n");
 
 		g_drvObj = drvObj;
 		drvObj->DriverUnload = DriverUnload;
@@ -97,6 +97,7 @@ extern "C"
 
 		// TODO: check physmem handles
 		// TODO: compare drivers on disk to mem
+		// TODO: more
 
 		return NtStatus;
 	}

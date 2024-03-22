@@ -98,7 +98,7 @@ KEVENT g_scanDriverObjectsFinishedEvent;
 ULONG_PTR g_hashBucketLock = NULL;
 
 /**
- *
+ * Iterates all driver objects to check for hints to unbacked memory.
  * 
  * Original Credit: https://github.com/not-wlan/driver-hijack/blob/master/memedriver/hijack.cpp#L136
  */
@@ -120,7 +120,7 @@ UkCheckDriverObjects(IN PVOID StartContext)
     status = ZwOpenDirectoryObject(&handle, DIRECTORY_ALL_ACCESS, &attributes);
     if (!NT_SUCCESS(status))
     {
-        LOG_MSG("Couldnt get \\Driver directory handle\n");
+        LOG_DBG("Couldnt get \\Driver directory handle\n");
         return;
     }
 
@@ -128,7 +128,7 @@ UkCheckDriverObjects(IN PVOID StartContext)
     if (!NT_SUCCESS(status))
     {
         ZwClose(handle);
-        LOG_MSG("Couldnt get \\Driver directory object from handle\n");
+        LOG_DBG("Couldnt get \\Driver directory object from handle\n");
         return;
     }
 
@@ -137,7 +137,7 @@ UkCheckDriverObjects(IN PVOID StartContext)
 
     do
     {
-        LOG_MSG("Scanning DriverObjects...\n");
+        LOG_DBG("Scanning DriverObjects...\n");
 
         // Lock for the hashbucket
         KeEnterCriticalRegion(); 
@@ -157,7 +157,7 @@ UkCheckDriverObjects(IN PVOID StartContext)
                 // Check memory of DriverStart
                 if (UkGetDriverForAddress((ULONG_PTR)driver->DriverStart) == NULL)
                 {
-                    LOG_MSG("[DeviceObjectScanner] -> Detected DriverObject.DriverStart pointing to unbacked region %ws @ 0x%llx\n",
+                    LOG_MSG("[DeviceObjectScanner] -> Detected DriverObject.DriverStart pointing to unbacked or invalid region %ws @ 0x%llx\n",
                         driver->DriverName.Buffer,
                         (ULONG_PTR)driver->DriverStart
                     );

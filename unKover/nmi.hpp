@@ -68,7 +68,7 @@ UkAnalyzeNmiData()
 		PETHREAD ThreadObj = NULL;
 		NMI_CONTEXT nmiContext = g_NmiContext[core];
 
-		LOG_MSG("NMI callback data: TID: %ul\n", nmiContext.threadId);
+		LOG_DBG("NMI callback data: TID: %ul\n", nmiContext.threadId);
 
 		if (nmiContext.threadId == 0)
 		{
@@ -77,7 +77,7 @@ UkAnalyzeNmiData()
 
 		if (!NT_SUCCESS(PsLookupThreadByThreadId(ULongToHandle(nmiContext.threadId), &ThreadObj)))
 		{
-			LOG_MSG("PsLookupThreadByThreadId error\n");
+			LOG_DBG("PsLookupThreadByThreadId error\n");
 			continue;
 		}
 
@@ -89,17 +89,25 @@ UkAnalyzeNmiData()
 
 			if (driver == NULL)
 			{
-				LOG_MSG("  [%d] Stack frame %lu: 0x%llx // %ws\n", nmiContext.threadId, i, addr, L"??? <------ Unbacked!");
 				LOG_MSG("[NmiCallback] -> Detected stack frame pointing to unbacked region. TID: %ul @ 0x%llx", nmiContext.threadId, addr);
+			
+				// Print stack frame TODO: clean this code
+				for (auto j = 0; j < nmiContext.framesCaptured; ++j)
+				{
+					ULONG_PTR address = (ULONG_PTR)nmiContext.stackFrames[j];
+					PKLDR_DATA_TABLE_ENTRY currDriver = UkGetDriverForAddress(address);
+					if (currDriver == NULL)
+					{
+						LOG_MSG("  [%d] Stack frame %lu: 0x%llx // %ws\n", nmiContext.threadId, j, address, L"??? <------ Unbacked!");
+					}
+					else
+					{
+						auto offsetToFunction = (currDriver == NULL) ? address : (address - (ULONG_PTR)currDriver->DllBase);
+						PWCHAR driverName = currDriver->BaseDllName.Buffer;
+						LOG_MSG("  [%d] Stack frame %lu: 0x%llx+0x%llx // %ws\n", nmiContext.threadId, j, (ULONG_PTR)currDriver->DllBase, offsetToFunction, driverName);
+					}
+				}
 			}
-#ifdef LOG_STACK_FRAMES
-			else
-			{
-				auto offsetToFunction = (driver == NULL) ? addr : (addr - (ULONG_PTR)driver->DllBase);
-				PWCHAR driverName = driver->BaseDllName.Buffer;
-				LOG_MSG("  [%d] Stack frame %lu: 0x%llx+0x%llx // %ws\n", nmiContext.threadId, i, (ULONG_PTR)driver->DllBase, offsetToFunction, driverName);
-			}
-#endif
 		}
 		
 		if (ThreadObj)
@@ -154,7 +162,7 @@ UkSendNMI(IN PVOID StartContext)
 			KeInitializeAffinityEx(g_NmiAffinity);
 			KeAddProcessorAffinityEx(g_NmiAffinity, core);
 
-			LOG_MSG("Sending NMI to analyze thread running on core %d...\n", core);
+			LOG_DBG("Sending NMI to analyze thread running on core %d...\n", core);
 			HalSendNMI(g_NmiAffinity);
 
 			// Sleep for 1 seconds between each NMI to allow completion
@@ -167,7 +175,7 @@ UkSendNMI(IN PVOID StartContext)
 			NtStatus = KeDeregisterNmiCallback(g_NmiCallbackHandle);
 			if (!NT_SUCCESS(NtStatus))
 			{
-				LOG_MSG("KeDeregisterNmiCallback error: %d\n", NtStatus);
+				LOG_DBG("KeDeregisterNmiCallback error: %d\n", NtStatus);
 			}
 		}
 

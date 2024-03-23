@@ -2,6 +2,8 @@
 
 A PoC anti-rootkit that can detect drivers mapped to kernel memory. Think [Moneta](https://github.com/forrest-orr/moneta), but for the kernel (obviously this is a simplified comparison).
 
+Blog post available at: https://eversinc33.com/posts/anti-anti-rootkit-part-i/
+
 The idea is to have a small & concise anti-rootkit to aid you (the rootkit dev) in honing your rootkits evasion abilities while also showcasing detection vectors with minimal FP rate that can detect many of the openly available driver mapper + rootkit combinations. 
 
 While some open source anti-cheats with capabilities far beyond this tool's exist (such as donnaskiez [ac](https://github.com/donnaskiez/ac)), I wanted something that I can easily tweak according to my needs. Maybe it will be useful for you too.

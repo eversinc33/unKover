@@ -1,0 +1,35 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34031.279
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Unkover", "Unkover.vcxproj", "{CA2BD34A-0096-4A66-B78E-8645283F2CF4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM64 = Debug|ARM64
+		Debug|x64 = Debug|x64
+		Release|ARM64 = Release|ARM64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Debug|ARM64.ActiveCfg = Debug|ARM64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Debug|ARM64.Build.0 = Debug|ARM64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Debug|ARM64.Deploy.0 = Debug|ARM64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Debug|x64.ActiveCfg = Debug|x64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Debug|x64.Build.0 = Debug|x64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Debug|x64.Deploy.0 = Debug|x64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Release|ARM64.ActiveCfg = Release|ARM64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Release|ARM64.Build.0 = Release|ARM64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Release|ARM64.Deploy.0 = Release|ARM64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Release|x64.ActiveCfg = Release|x64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Release|x64.Build.0 = Release|x64
+		{CA2BD34A-0096-4A66-B78E-8645283F2CF4}.Release|x64.Deploy.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7D2F4B82-117C-4D89-8C66-30BD8AB2E52E}
+	EndGlobalSection
+EndGlobal

@@ -97,7 +97,9 @@ extern "C"
 		// TODO: check physmem handles
 		// TODO: compare drivers on disk to mem
 		// TODO: compare PIDs in PspCidTable and EPROCESS linked list to check for potentially hiding threads
-		// TODO: more
+		// TODO: scan kernel address space for PEs
+		// TODO: scan some known pointer hijacks
+		// ... and more
 
 		return NtStatus;
 	}

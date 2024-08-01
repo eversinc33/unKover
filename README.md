@@ -14,12 +14,13 @@ Techniques implemented:
 * APC StackWalks: Same as the NMI check, but with an APC queued to each system thread.
 * System thread analysis: Periodically check all system threads for start-addresses pointing to unbacked memory.
 * Driver Object analysis: Periodically check all driver objects registered on the system, and check if their DriverEntry points to unbacked memory.
+* Driver OnDisk vs InMem comparison: Periodically check for all drivers if the .text section differs in-memory vs on disk. If yes, driver stomping likely happened.
 
 <p align="center">
 <img src="./img/detect.jpg" alt="unKover output"/>
 </p>
 
-So far its quite trivial to bypass these, especially given the implementations :) Hopefully that will change in the future.
+So far its quite trivial to bypass most of these, especially given the implementations :) Hopefully that will change in the future.
 
 ## Installation
 

@@ -106,6 +106,7 @@
     <ClInclude Include="unKover\deviceobjects.hpp" />
     <ClInclude Include="unKover\meta.hpp" />
     <ClInclude Include="unKover\nmi.hpp" />
+    <ClInclude Include="unKover\sectioncompare.hpp" />
     <ClInclude Include="unKover\threads.hpp" />
     <ClInclude Include="unKover\utils.hpp" />
   </ItemGroup>

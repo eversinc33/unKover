@@ -5,11 +5,13 @@
 #include "threads.hpp"
 #include "apc.hpp"
 #include "deviceobjects.hpp"
+#include "sectioncompare.hpp"
 
 HANDLE g_hScanSystemThreads;
 HANDLE g_hSendNmis;
 HANDLE g_hCheckDriverObjects;
 HANDLE g_hAPCCheck;
+HANDLE g_hTextSectionCompare;
 
 VOID 
 UkShutdownThread(PHANDLE pThreadHandle, PKEVENT pFinishedEvent)
@@ -33,11 +35,13 @@ DriverUnload(PDRIVER_OBJECT drvObj)
 	g_sendNmis = FALSE;
 	g_scanSystemThreads = FALSE;
 	g_scanDriverObjects = FALSE;
+	g_compareTextSections = FALSE;
 	UkShutdownThread(&g_hAPCCheck, &g_apcFinishedEvent);
 	UkShutdownThread(&g_hSendNmis, &g_sendNmisFinishedEvent);
 	UkShutdownThread(&g_hScanSystemThreads, &g_scanSystemThreadsFinishedEvent);
 	UkShutdownThread(&g_hCheckDriverObjects, &g_scanDriverObjectsFinishedEvent);
-
+	UkShutdownThread(&g_hTextSectionCompare, &g_compareTextSectionsFinishedEvent);
+	
 	// Wait 5 seconds for termination
 	UkSleepMs(5000);
 
@@ -94,8 +98,14 @@ extern "C"
 			return NtStatus;
 		}
 
+		LOG_MSG("Creating thread to compare driver .text sections\n");
+		NtStatus = PsCreateSystemThread(&g_hTextSectionCompare, THREAD_ALL_ACCESS, NULL, NULL, NULL, UkCompareTextSections, NULL);
+		if (!NT_SUCCESS(NtStatus))
+		{
+			return NtStatus;
+		}
+
 		// TODO: check physmem handles
-		// TODO: compare drivers on disk to mem
 		// TODO: compare PIDs in PspCidTable and EPROCESS linked list to check for potentially hiding threads
 		// TODO: more
 

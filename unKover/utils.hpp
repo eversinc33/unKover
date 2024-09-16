@@ -23,7 +23,7 @@ typedef struct _KLDR_DATA_TABLE_ENTRY
 	PVOID ExceptionTable;
 	UINT32 ExceptionTableSize;
 	PVOID GpValue;
-	NON_PAGED_DEBUG_INFO* NonPagedDebugInfo;
+	NON_PAGED_DEBUG_INFO NonPagedDebugInfo;
 	PVOID DllBase;
 	PVOID EntryPoint;
 	UINT32 SizeOfImage;

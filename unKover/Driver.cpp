@@ -6,12 +6,14 @@
 #include "apc.hpp"
 #include "deviceobjects.hpp"
 #include "sectioncompare.hpp"
+#include "hiding.hpp"
 
 HANDLE g_hScanSystemThreads;
 HANDLE g_hSendNmis;
 HANDLE g_hCheckDriverObjects;
 HANDLE g_hAPCCheck;
 HANDLE g_hTextSectionCompare;
+HANDLE g_hHidingDetection;
 
 VOID 
 UkShutdownThread(PHANDLE pThreadHandle, PKEVENT pFinishedEvent)
@@ -36,11 +38,13 @@ DriverUnload(PDRIVER_OBJECT drvObj)
 	g_scanSystemThreads = FALSE;
 	g_scanDriverObjects = FALSE;
 	g_compareTextSections = FALSE;
+	g_hidingDetection = FALSE;
 	UkShutdownThread(&g_hAPCCheck, &g_apcFinishedEvent);
 	UkShutdownThread(&g_hSendNmis, &g_sendNmisFinishedEvent);
 	UkShutdownThread(&g_hScanSystemThreads, &g_scanSystemThreadsFinishedEvent);
 	UkShutdownThread(&g_hCheckDriverObjects, &g_scanDriverObjectsFinishedEvent);
 	UkShutdownThread(&g_hTextSectionCompare, &g_compareTextSectionsFinishedEvent);
+	UkShutdownThread(&g_hHidingDetection, &g_hidingDetectionFinishedEvent);
 	
 	// Wait 5 seconds for termination
 	UkSleepMs(5000);
@@ -70,6 +74,7 @@ extern "C"
 		}
 
 		// Start monitoring threads
+		/*
 		LOG_MSG("Creating thread to scan system threads\n");
 		NtStatus = PsCreateSystemThread(&g_hScanSystemThreads, THREAD_ALL_ACCESS, NULL, NULL, NULL, UkScanSystemThreads, NULL);
 		if (!NT_SUCCESS(NtStatus))
@@ -104,9 +109,16 @@ extern "C"
 		{
 			return NtStatus;
 		}
+		*/
+
+		LOG_MSG("Creating thread to detect threads hidden from PspCidTable\n");
+		NtStatus = PsCreateSystemThread(&g_hHidingDetection, THREAD_ALL_ACCESS, NULL, NULL, NULL, UkDetectHiddenThreads, NULL);
+		if (!NT_SUCCESS(NtStatus))
+		{
+			return NtStatus;
+		}
 
 		// TODO: check physmem handles
-		// TODO: compare PIDs in PspCidTable and EPROCESS linked list to check for potentially hiding threads
 		// TODO: more
 
 		return NtStatus;

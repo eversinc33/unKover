@@ -12,6 +12,8 @@ Techniques implemented:
 * APC StackWalks: Same as the NMI check, but with an APC queued to each system thread.
 * System thread analysis: Periodically check all system threads for start-addresses pointing to unbacked memory.
 * Driver Object analysis: Periodically check all driver objects registered on the system, and check if their DriverEntry points to unbacked memory.
+* .text section comparison: Periodically check drivers for .text section thats differ in-mem vs on-disk, to detect driver "stomping"
+* detecting threads hidden by removing them from the `PspCidTable`
 
 <p align="center">
 <img src="./img/detect.jpg" alt="unKover output"/>

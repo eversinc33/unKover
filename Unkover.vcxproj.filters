@@ -54,4 +54,9 @@
   <ItemGroup>
     <None Include="README.md" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="unKover\hiding.hpp">
+      <Filter>Header Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

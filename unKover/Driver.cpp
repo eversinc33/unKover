@@ -74,7 +74,6 @@ extern "C"
 		}
 
 		// Start monitoring threads
-		/*
 		LOG_MSG("Creating thread to scan system threads\n");
 		NtStatus = PsCreateSystemThread(&g_hScanSystemThreads, THREAD_ALL_ACCESS, NULL, NULL, NULL, UkScanSystemThreads, NULL);
 		if (!NT_SUCCESS(NtStatus))
@@ -109,7 +108,6 @@ extern "C"
 		{
 			return NtStatus;
 		}
-		*/
 
 		LOG_MSG("Creating thread to detect threads hidden from PspCidTable\n");
 		NtStatus = PsCreateSystemThread(&g_hHidingDetection, THREAD_ALL_ACCESS, NULL, NULL, NULL, UkDetectHiddenThreads, NULL);

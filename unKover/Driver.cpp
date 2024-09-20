@@ -28,8 +28,6 @@ UkShutdownThread(PHANDLE pThreadHandle, PKEVENT pFinishedEvent)
 VOID 
 DriverUnload(PDRIVER_OBJECT drvObj)
 {
-	UNREFERENCED_PARAMETER(drvObj);
-
 	LOG_DBG("Unload called\n");
 	LOG_DBG("Stopping all threads. This can a few seconds...\n");
 
@@ -46,8 +44,8 @@ DriverUnload(PDRIVER_OBJECT drvObj)
 	UkShutdownThread(&g_hTextSectionCompare, &g_compareTextSectionsFinishedEvent);
 	UkShutdownThread(&g_hHidingDetection, &g_hidingDetectionFinishedEvent);
 	
-	// Wait 5 seconds for termination
-	UkSleepMs(5000);
+	// Wait 3 seconds for termination
+	UkSleepMs(3000);
 
 	// Unload NMI module
 	UkUnloadNMI();

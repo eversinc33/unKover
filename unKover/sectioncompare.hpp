@@ -271,7 +271,7 @@ UkGetDriverImagePath(
     status = ZwOpenKey(&keyHandle, KEY_READ, &objectAttributes);
     if (!NT_SUCCESS(status))
     {
-        DbgPrint("[!] Failed to open registry key: %wZ, Status: 0x%x\n", &registryPath, status);
+        LOG_MSG("[!] Failed to open registry key: %wZ, Status: 0x%x\n", &registryPath, status);
         goto Cleanup;
     }
 
@@ -292,7 +292,7 @@ UkGetDriverImagePath(
     }
     else
     {
-        DbgPrint("Failed to query ImagePath value, Status: 0x%x\n", status);
+        LOG_MSG("Failed to query ImagePath value, Status: 0x%x\n", status);
         goto Cleanup;
     }
 
@@ -316,7 +316,7 @@ UkGetPeSection(
     auto ntHeaders = (PIMAGE_NT_HEADERS)((CHAR*)peBuffer + ((PIMAGE_DOS_HEADER)peBuffer)->e_lfanew);
     if (ntHeaders == NULL)
     {
-        DbgPrint("-- [!] Invalid PE header\n");
+        LOG_MSG("-- [!] Invalid PE header\n");
         return STATUS_INVALID_PARAMETER;
     }
 
@@ -336,14 +336,14 @@ UkGetPeSection(
 
     if (sectionHeader == NULL)
     {
-        DbgPrint("[!] Section not found\n");
+        LOG_MSG("[!] Section not found\n");
         return STATUS_NOT_FOUND;
     }
 
     sectionBuffer = (PCHAR)ExAllocatePoolWithTag(NonPagedPool, sectionSize, 'rvkU');
     if (sectionBuffer == NULL)
     {
-        DbgPrint("[!] Failed to allocate memory for section\n");
+        LOG_MSG("[!] Failed to allocate memory for section\n");
         return STATUS_INSUFFICIENT_RESOURCES;
     }
 
@@ -361,6 +361,8 @@ UkCompareTextSections(PVOID startContext)
     OBJECT_ATTRIBUTES attributes;
     UNICODE_STRING directoryName = RTL_CONSTANT_STRING(L"\\Driver");
 
+    KeInitializeEvent(&g_compareTextSectionsFinishedEvent, NotificationEvent, FALSE);
+
     while (g_compareTextSections) 
     {
         // Get Handle to \Driver directory
@@ -368,7 +370,7 @@ UkCompareTextSections(PVOID startContext)
         status = ZwOpenDirectoryObject(&handle, DIRECTORY_ALL_ACCESS, &attributes);
         if (!NT_SUCCESS(status))
         {
-            DbgPrint("Couldnt get \\Driver directory handle\n");
+            LOG_MSG("Couldnt get \\Driver directory handle\n");
             return;
         }
 
@@ -376,14 +378,14 @@ UkCompareTextSections(PVOID startContext)
         if (!NT_SUCCESS(status))
         {
             ZwClose(handle);
-            DbgPrint("Couldnt get \\Driver directory object from handle\n");
+            LOG_MSG("Couldnt get \\Driver directory object from handle\n");
             return;
         }
 
         POBJECT_DIRECTORY directoryObject = (POBJECT_DIRECTORY)directory;
         ULONG_PTR hashBucketLock = directoryObject->Lock;
 
-        DbgPrint("Scanning DriverObjects...\n");
+        LOG_MSG("Scanning DriverObjects...\n");
 
         // Lock for the hashbucket
         KeEnterCriticalRegion();
@@ -425,11 +427,11 @@ UkCompareTextSections(PVOID startContext)
                 NTSTATUS status = UkGetDriverImagePath(&driverServiceName, &imagePath);
                 if (NT_SUCCESS(status))
                 {
-                    // DbgPrint("[*] Checking driver: %wZ -> %wZ\n", driverServiceName, imagePath);
+                    // LOG_MSG("[*] Checking driver: %wZ -> %wZ\n", driverServiceName, imagePath);
                 }
                 else
                 {
-                    DbgPrint("-- [!] Failed to get driver image path for %wZ, Status: 0x%x\n", driverServiceName, status);
+                    //LOG_MSG("-- [!] Failed to get driver image path for %wZ, Status: 0x%x\n", driverServiceName, status);
                     goto Next;
                 }
 
@@ -438,7 +440,7 @@ UkCompareTextSections(PVOID startContext)
                 status = UkPrependWindowsPathIfStartsWithSystem32(&imagePath, &imagePathAbsolute);
                 if (!NT_SUCCESS(status))
                 {
-                    DbgPrint("-- [!] Failed to construct absolute path for %wZ, Status: 0x%x\n", imagePath, status);
+                    //LOG_MSG("-- [!] Failed to construct absolute path for %wZ, Status: 0x%x\n", imagePath, status);
                     goto Next;
                 }
 
@@ -457,16 +459,16 @@ UkCompareTextSections(PVOID startContext)
 
                     if (RtlCompareMemory(textSectionOnDiskBuffer, textSectionInMemBuffer, sectionSizeOnDisk) != sectionSizeOnDisk)
                     {
-                        DbgPrint("-- [!] .TEXT SECTION DIFFERS\n");
+                        LOG_MSG("[TextSectionComparer] -> .TEXT section differs %wZ\n", imagePath);
                     }
                     else
                     {
-                        // DbgPrint("-- [*] .text section matches\n");
+                        // LOG_MSG("-- [*] .text section matches\n");
                     }
                 }
                 else
                 {
-                    DbgPrint("-- [!] Failed to read image %wZ, Status: 0x%x\n", imagePathAbsolute, status);
+                    LOG_MSG("Failed to read image %wZ, Status: 0x%x\n", imagePathAbsolute, status);
                     goto Next;
                 }
 
@@ -497,6 +499,7 @@ UkCompareTextSections(PVOID startContext)
 
     } while (g_compareTextSections);
 
-    KeSetEvent(&g_compareTextSectionsFinishedEvent, 0, FALSE);
+    KeSetEvent(&g_compareTextSectionsFinishedEvent, 0, TRUE);
+    KeWaitForSingleObject(&g_compareTextSectionsFinishedEvent, Executive, KernelMode, FALSE, NULL);
     PsTerminateSystemThread(STATUS_SUCCESS);
 }

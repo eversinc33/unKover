@@ -3,8 +3,6 @@
 #include <ntddk.h>
 #include "utils.hpp"
 
-typedef NTSTATUS(NTAPI* ZWGETNEXTTHREAD)(_In_ HANDLE ProcessHandle, _In_ HANDLE ThreadHandle, _In_ ACCESS_MASK DesiredAccess, _In_ ULONG HandleAttributes, _In_ ULONG Flags, _Out_ PHANDLE NewThreadHandle);
-ZWGETNEXTTHREAD pZwGetNextThread;
 BOOLEAN g_hidingDetection = TRUE;
 KEVENT g_hidingDetectionFinishedEvent;
 
@@ -37,7 +35,7 @@ UkWalkSystemProcessThreads()
 
             if (!NT_SUCCESS(status))
             {
-                LOG_MSG("Found hidden thread: PID: 0x%llx\n", threadId);
+                LOG_MSG("[PspCidTableScanner] -> Found hidden thread: PID: 0x%llx\n", threadId);
             }
         }
     }
@@ -53,17 +51,6 @@ UkDetectHiddenThreads(IN PVOID StartContext)
 {
 	UNREFERENCED_PARAMETER(StartContext);
 
-    UNICODE_STRING usZwGetNextThread = RTL_CONSTANT_STRING(L"ZwGetNextThread");
-    pZwGetNextThread = (ZWGETNEXTTHREAD)MmGetSystemRoutineAddress(&usZwGetNextThread);
-    if (!pZwGetNextThread)
-    {
-        LOG_MSG("Failed to resolve ZwGetNextThread!\n");
-        g_hidingDetection = FALSE;
-        KeSetEvent(&g_hidingDetectionFinishedEvent, 0, FALSE);
-        PsTerminateSystemThread(STATUS_SUCCESS);
-        return;
-    }
-
 	KeInitializeEvent(&g_hidingDetectionFinishedEvent, NotificationEvent, FALSE);
 
 	do
@@ -74,6 +61,7 @@ UkDetectHiddenThreads(IN PVOID StartContext)
 
 	} while (g_hidingDetection);
 
-	KeSetEvent(&g_hidingDetectionFinishedEvent, 0, FALSE);
+	KeSetEvent(&g_hidingDetectionFinishedEvent, 0, TRUE);
+    KeWaitForSingleObject(&g_hidingDetectionFinishedEvent, Executive, KernelMode, FALSE, NULL);
 	PsTerminateSystemThread(STATUS_SUCCESS);
 }

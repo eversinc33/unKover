@@ -185,6 +185,7 @@ UkSendNMI(IN PVOID StartContext)
 
 	} while (g_sendNmis);
 
-	KeSetEvent(&g_sendNmisFinishedEvent, 0, FALSE);
+	KeSetEvent(&g_sendNmisFinishedEvent, 0, TRUE);
+	KeWaitForSingleObject(&g_sendNmisFinishedEvent, Executive, KernelMode, FALSE, NULL);
 	PsTerminateSystemThread(STATUS_SUCCESS);
 }

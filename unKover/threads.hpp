@@ -55,6 +55,7 @@ UkScanSystemThreads(IN PVOID StartContext)
 
 	} while(g_scanSystemThreads);
 	
-	KeSetEvent(&g_scanSystemThreadsFinishedEvent, 0, FALSE);
+	KeSetEvent(&g_scanSystemThreadsFinishedEvent, 0, TRUE);
+	KeWaitForSingleObject(&g_scanSystemThreadsFinishedEvent, Executive, KernelMode, FALSE, NULL);
 	PsTerminateSystemThread(STATUS_SUCCESS);
 }

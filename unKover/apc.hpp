@@ -196,7 +196,7 @@ UkAPCStackWalk(IN PVOID StartContext)
 			// Wait for event to signal that the apc is done before queueing the next one
 			UkSleepMs(50);
 			LARGE_INTEGER timeout;
-			timeout.QuadPart = 2000;
+			timeout.QuadPart = 5000;
 			NtStatus = KeWaitForSingleObject(&g_kernelApcSyncEvent, Executive, KernelMode, FALSE, &timeout);
 			if (NtStatus == STATUS_TIMEOUT)
 			{
@@ -212,6 +212,7 @@ UkAPCStackWalk(IN PVOID StartContext)
 
 	} while (g_doAPCStackWalk);
 
-	KeSetEvent(&g_apcFinishedEvent, 0, FALSE);
+	KeSetEvent(&g_apcFinishedEvent, 0, TRUE);
+	KeWaitForSingleObject(&g_apcFinishedEvent, Executive, KernelMode, FALSE, NULL);
 	PsTerminateSystemThread(STATUS_SUCCESS);
 }

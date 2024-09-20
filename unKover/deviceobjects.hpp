@@ -182,7 +182,10 @@ UkCheckDriverObjects(IN PVOID StartContext)
     } while (g_scanDriverObjects);
 
     ObDereferenceObject(directory);
-    ZwClose(handle);
-    KeSetEvent(&g_scanDriverObjectsFinishedEvent, 0, FALSE);
+    ZwClose(handle);	
+
+    KeSetEvent(&g_scanDriverObjectsFinishedEvent, 0, TRUE);
+    KeWaitForSingleObject(&g_scanDriverObjectsFinishedEvent, Executive, KernelMode, FALSE, NULL);
+
     PsTerminateSystemThread(STATUS_SUCCESS);
 }

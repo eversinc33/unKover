@@ -27,36 +27,65 @@
     <ClCompile Include="unKover\Driver.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="unKover\meta.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unKover\nmi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unKover\threads.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unKover\apc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unKover\deviceobjects.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unKover\sectioncompare.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unKover\hiding.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unKover\utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unKover\tracing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="unKover\meta.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="unKover\nmi.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="unKover\threads.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="unKover\utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="unKover\deviceobjects.hpp">
+    <ClInclude Include="unKover\meta.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="unKover\apc.hpp">
+    <ClInclude Include="unKover\nmi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="unKover\sectioncompare.hpp">
+    <ClInclude Include="unKover\threads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unKover\apc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unKover\deviceobjects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unKover\sectioncompare.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unKover\hiding.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unKover\Driver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="unKover\hiding.hpp">
-      <Filter>Header Files</Filter>
-    </Text>
+    <None Include="Unkover.vcxproj.new" />
   </ItemGroup>
 </Project>

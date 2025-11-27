@@ -1,103 +1,10 @@
 #include <ntifs.h>
-#include "deviceobjects.hpp"
+#include <ntddk.h>
+#include <ntimage.h>
+#include <string.h>
 
-typedef struct _IMAGE_DATA_DIRECTORY {
-    ULONG   VirtualAddress;
-    ULONG   Size;
-} IMAGE_DATA_DIRECTORY, * PIMAGE_DATA_DIRECTORY;
-
-typedef struct _IMAGE_OPTIONAL_HEADER64 {
-    USHORT      Magic;
-    UCHAR       MajorLinkerVersion;
-    UCHAR       MinorLinkerVersion;
-    ULONG       SizeOfCode;
-    ULONG       SizeOfInitializedData;
-    ULONG       SizeOfUninitializedData;
-    ULONG       AddressOfEntryPoint;
-    ULONG       BaseOfCode;
-    ULONGLONG   ImageBase;
-    ULONG       SectionAlignment;
-    ULONG       FileAlignment;
-    USHORT      MajorOperatingSystemVersion;
-    USHORT      MinorOperatingSystemVersion;
-    USHORT      MajorImageVersion;
-    USHORT      MinorImageVersion;
-    USHORT      MajorSubsystemVersion;
-    USHORT      MinorSubsystemVersion;
-    ULONG       Win32VersionValue;
-    ULONG       SizeOfImage;
-    ULONG       SizeOfHeaders;
-    ULONG       CheckSum;
-    USHORT      Subsystem;
-    USHORT      DllCharacteristics;
-    ULONGLONG   SizeOfStackReserve;
-    ULONGLONG   SizeOfStackCommit;
-    ULONGLONG   SizeOfHeapReserve;
-    ULONGLONG   SizeOfHeapCommit;
-    ULONG       LoaderFlags;
-    ULONG       NumberOfRvaAndSizes;
-    IMAGE_DATA_DIRECTORY DataDirectory[16];
-} IMAGE_OPTIONAL_HEADER64, * PIMAGE_OPTIONAL_HEADER64;
-
-typedef struct _IMAGE_FILE_HEADER {
-    USHORT  Machine;
-    USHORT  NumberOfSections;
-    ULONG   TimeDateStamp;
-    ULONG   PointerToSymbolTable;
-    ULONG   NumberOfSymbols;
-    USHORT  SizeOfOptionalHeader;
-    USHORT  Characteristics;
-} IMAGE_FILE_HEADER, * PIMAGE_FILE_HEADER;
-
-typedef struct _IMAGE_NT_HEADERS64 {
-    ULONG Signature;
-    IMAGE_FILE_HEADER FileHeader;
-    IMAGE_OPTIONAL_HEADER64 OptionalHeader;
-} IMAGE_NT_HEADERS64, * PIMAGE_NT_HEADERS64;
-
-typedef struct _IMAGE_SECTION_HEADER {
-    UCHAR   Name[8];
-    union {
-        ULONG   PhysicalAddress;
-        ULONG   VirtualSize;
-    } Misc;
-    ULONG   VirtualAddress;
-    ULONG   SizeOfRawData;
-    ULONG   PointerToRawData;
-    ULONG   PointerToRelocations;
-    ULONG   PointerToLinenumbers;
-    USHORT  NumberOfRelocations;
-    USHORT  NumberOfLinenumbers;
-    ULONG   Characteristics;
-} IMAGE_SECTION_HEADER, * PIMAGE_SECTION_HEADER;
-
-#define IMAGE_FIRST_SECTION( ntheader ) ((PIMAGE_SECTION_HEADER)        \
-    ((ULONG_PTR)(ntheader) +                                            \
-     FIELD_OFFSET( IMAGE_NT_HEADERS64, OptionalHeader ) +                 \
-     ((ntheader))->FileHeader.SizeOfOptionalHeader   \
-    ))
-
-typedef struct _IMAGE_DOS_HEADER {      // DOS .EXE header
-    USHORT e_magic;                     // Magic number
-    USHORT e_cblp;                      // Bytes on last page of file
-    USHORT e_cp;                        // Pages in file
-    USHORT e_crlc;                      // Relocations
-    USHORT e_cparhdr;                   // Size of header in paragraphs
-    USHORT e_minalloc;                  // Minimum extra paragraphs needed
-    USHORT e_maxalloc;                  // Maximum extra paragraphs needed
-    USHORT e_ss;                        // Initial (relative) SS value
-    USHORT e_sp;                        // Initial SP value
-    USHORT e_csum;                      // Checksum
-    USHORT e_ip;                        // Initial IP value
-    USHORT e_cs;                        // Initial (relative) CS value
-    USHORT e_lfarlc;                    // File address of relocation table
-    USHORT e_ovno;                      // Overlay number
-    USHORT e_res[4];                    // Reserved words
-    USHORT e_oemid;                     // OEM identifier (for e_oeminfo)
-    USHORT e_oeminfo;                   // OEM information; e_oemid specific
-    USHORT e_res2[10];                  // Reserved words
-    LONG   e_lfanew;                    // File address of new exe header
-} IMAGE_DOS_HEADER, * PIMAGE_DOS_HEADER;
+#include "sectioncompare.h"
+#include "meta.h"
 
 BOOLEAN g_compareTextSections = TRUE;
 KEVENT g_compareTextSectionsFinishedEvent;
@@ -116,30 +23,23 @@ UkPrependWindowsPathIfStartsWithSystem32(
 
     if (startsWithSystem32)
     {
-        // Calculate the new string length
         USHORT newLength = windowsPrefix.Length + OriginalString->Length;
 
-        // Allocate memory for the new string
-        ResultString->Buffer = (PWCH)ExAllocatePoolWithTag(NonPagedPool, newLength, 'rvkU');
+        ResultString->Buffer = (PWCH)ExAllocatePoolWithTag(NonPagedPool, newLength, POOL_TAG);
         if (ResultString->Buffer == NULL)
         {
             return STATUS_INSUFFICIENT_RESOURCES;
         }
 
-        // Set the lengths
         ResultString->Length = newLength;
         ResultString->MaximumLength = newLength;
 
-        // Copy the prefix "C:\\Windows"
         RtlCopyMemory(ResultString->Buffer, windowsPrefix.Buffer, windowsPrefix.Length);
-
-        // Copy the original string after the prefix
         RtlCopyMemory((PCHAR)ResultString->Buffer + windowsPrefix.Length, OriginalString->Buffer, OriginalString->Length);
     }
     else
     {
-        // If the original string does not start with "system32", just return it as-is
-        ResultString->Buffer = (PWCH)ExAllocatePoolWithTag(NonPagedPool, OriginalString->Length, 'rvkU');
+        ResultString->Buffer = (PWCH)ExAllocatePoolWithTag(NonPagedPool, OriginalString->Length, POOL_TAG);
         if (ResultString->Buffer == NULL)
         {
             return STATUS_INSUFFICIENT_RESOURCES;
@@ -197,7 +97,7 @@ UkReadFileToMemory(
     }
 
     // allocate memory
-    buffer = ExAllocatePoolWithTag(NonPagedPool, fileStandardInformation.EndOfFile.LowPart, 'rvkU');
+    buffer = ExAllocatePoolWithTag(NonPagedPool, fileStandardInformation.EndOfFile.LowPart, POOL_TAG);
     if (buffer == NULL)
     {
         status = STATUS_INSUFFICIENT_RESOURCES;
@@ -222,85 +122,6 @@ Cleanup:
     return status;
 }
 
-VOID
-UkStripDriverPrefix(
-    PUNICODE_STRING InputString,
-    PUNICODE_STRING OutputString
-)
-{
-    UNICODE_STRING prefix = RTL_CONSTANT_STRING(L"\\Driver");
-    if (RtlPrefixUnicodeString(&prefix, InputString, TRUE))
-    {
-        // Calculate the new length
-        USHORT newLength = InputString->Length - prefix.Length;
-
-        // Set the new buffer and length in the output string
-        OutputString->Buffer = InputString->Buffer + (prefix.Length / sizeof(WCHAR));
-        OutputString->Length = newLength;
-        OutputString->MaximumLength = newLength;
-    }
-    else
-    {
-        RtlCopyUnicodeString(OutputString, InputString);
-    }
-}
-
-NTSTATUS
-UkGetDriverImagePath(
-    _In_ PUNICODE_STRING DriverName,
-    _Out_ PUNICODE_STRING ImagePath
-)
-{
-    NTSTATUS status;
-    UNICODE_STRING registryPath;
-    OBJECT_ATTRIBUTES objectAttributes;
-    HANDLE keyHandle = NULL;
-    ULONG resultLength;
-    PKEY_VALUE_PARTIAL_INFORMATION keyValueInfo;
-
-    // construct registry path
-    WCHAR registryPathBuffer[256];
-    registryPath.Buffer = registryPathBuffer;
-    registryPath.Length = 0;
-    registryPath.MaximumLength = sizeof(registryPathBuffer);
-    RtlAppendUnicodeToString(&registryPath, L"\\Registry\\Machine\\SYSTEM\\CurrentControlSet\\Services");
-    RtlAppendUnicodeStringToString(&registryPath, DriverName);
-
-    // query reg key
-    InitializeObjectAttributes(&objectAttributes, &registryPath, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, NULL, NULL);
-    status = ZwOpenKey(&keyHandle, KEY_READ, &objectAttributes);
-    if (!NT_SUCCESS(status))
-    {
-        LOG_MSG("[!] Failed to open registry key: %wZ, Status: 0x%x\n", &registryPath, status);
-        goto Cleanup;
-    }
-
-    ULONG keyValueInfoSize = sizeof(KEY_VALUE_PARTIAL_INFORMATION) + 256 * sizeof(WCHAR);
-    keyValueInfo = (PKEY_VALUE_PARTIAL_INFORMATION)ExAllocatePoolWithTag(PagedPool, keyValueInfoSize, 'rvkU');
-    if (!keyValueInfo)
-    {
-        status = STATUS_INSUFFICIENT_RESOURCES;
-        goto Cleanup;
-    }
-
-    UNICODE_STRING valueName;
-    RtlInitUnicodeString(&valueName, L"ImagePath");
-    status = ZwQueryValueKey(keyHandle, &valueName, KeyValuePartialInformation, keyValueInfo, keyValueInfoSize, &resultLength);
-    if (NT_SUCCESS(status))
-    {
-        RtlInitUnicodeString(ImagePath, (PCWSTR)keyValueInfo->Data);
-    }
-    else
-    {
-        LOG_MSG("Failed to query ImagePath value, Status: 0x%x\n", status);
-        goto Cleanup;
-    }
-
-Cleanup:
-    if (keyHandle) { ZwClose(keyHandle); }
-    return status;
-}
-
 NTSTATUS
 UkGetPeSection(
     IN PCHAR sectionName,
@@ -309,46 +130,44 @@ UkGetPeSection(
     OUT PULONG size
 )
 {
-    ULONG sectionSizeOnDisk = 0;
-    ULONG sectionSize = 0;
-    ULONG sectionOffset = 0;
-
-    auto ntHeaders = (PIMAGE_NT_HEADERS)((CHAR*)peBuffer + ((PIMAGE_DOS_HEADER)peBuffer)->e_lfanew);
-    if (ntHeaders == NULL)
+    PIMAGE_DOS_HEADER dosHeader = (PIMAGE_DOS_HEADER)peBuffer;
+    if (!dosHeader)
     {
-        LOG_MSG("-- [!] Invalid PE header\n");
+        UkTraceEtw("TextSectionComparer", "-- [!] Invalid PE header");
         return STATUS_INVALID_PARAMETER;
     }
 
-    auto sectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
+    PIMAGE_NT_HEADERS ntHeaders = (PIMAGE_NT_HEADERS)((CHAR*)peBuffer + dosHeader->e_lfanew);
+    if (ntHeaders == NULL)
+    {
+        UkTraceEtw("TextSectionComparer", "-- [!] Invalid PE header");
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    PIMAGE_SECTION_HEADER sectionHeader = IMAGE_FIRST_SECTION(ntHeaders);
     for (ULONG i = 0; i < ntHeaders->FileHeader.NumberOfSections; i++)
     {
-        ULONG IMAGE_SIZEOF_SHORT_NAME = 8;
         if (strncmp((char*)sectionHeader->Name, sectionName, IMAGE_SIZEOF_SHORT_NAME) == 0)
         {
-            sectionOffset = sectionHeader->PointerToRawData;
-            sectionSize = sectionHeader->SizeOfRawData;
-            sectionSizeOnDisk = sectionHeader->SizeOfRawData;
-            break;
+            ULONG sectionOffset = sectionHeader->PointerToRawData;
+            ULONG sectionSize = sectionHeader->SizeOfRawData;
+
+            sectionBuffer = (PCHAR)ExAllocatePoolWithTag(NonPagedPool, sectionSize, POOL_TAG);
+            if (sectionBuffer == NULL)
+            {
+                UkTraceEtw("TextSectionComparer", "[!] Failed to allocate memory for section");
+                return STATUS_INSUFFICIENT_RESOURCES;
+            }
+
+            RtlCopyMemory(sectionBuffer, (PCHAR)((ULONG_PTR)peBuffer + sectionOffset), sectionSize);
+            if (size) *size = sectionSize;
+            return STATUS_SUCCESS;
         }
         sectionHeader++;
     }
 
-    if (sectionHeader == NULL)
-    {
-        LOG_MSG("[!] Section not found\n");
-        return STATUS_NOT_FOUND;
-    }
-
-    sectionBuffer = (PCHAR)ExAllocatePoolWithTag(NonPagedPool, sectionSize, 'rvkU');
-    if (sectionBuffer == NULL)
-    {
-        LOG_MSG("[!] Failed to allocate memory for section\n");
-        return STATUS_INSUFFICIENT_RESOURCES;
-    }
-
-    RtlCopyMemory(sectionBuffer, (PCHAR)((ULONG_PTR)peBuffer + sectionOffset), sectionSize);
-    return STATUS_SUCCESS;
+    UkTraceEtw("TextSectionComparer", "[!] Section not found");
+    return STATUS_NOT_FOUND;
 }
 
 VOID
@@ -365,12 +184,12 @@ UkCompareTextSections(PVOID startContext)
 
     while (g_compareTextSections) 
     {
-        // Get Handle to \Driver directory
+        // Get Handle to \\Driver directory
         InitializeObjectAttributes(&attributes, &directoryName, OBJ_CASE_INSENSITIVE, NULL, NULL);
         status = ZwOpenDirectoryObject(&handle, DIRECTORY_ALL_ACCESS, &attributes);
         if (!NT_SUCCESS(status))
         {
-            LOG_MSG("Couldnt get \\Driver directory handle\n");
+            LOG_DBG("Couldnt get \\Driver directory handle");
             return;
         }
 
@@ -378,14 +197,14 @@ UkCompareTextSections(PVOID startContext)
         if (!NT_SUCCESS(status))
         {
             ZwClose(handle);
-            LOG_MSG("Couldnt get \\Driver directory object from handle\n");
+            LOG_DBG("Couldnt get \\Driver directory object from handle");
             return;
         }
 
         POBJECT_DIRECTORY directoryObject = (POBJECT_DIRECTORY)directory;
         ULONG_PTR hashBucketLock = directoryObject->Lock;
 
-        LOG_MSG("Scanning DriverObjects...\n");
+        UkTraceEtw("TextSectionComparer", "Scanning DriverObjects...");
 
         // Lock for the hashbucket
         KeEnterCriticalRegion();
@@ -459,7 +278,7 @@ UkCompareTextSections(PVOID startContext)
 
                     if (RtlCompareMemory(textSectionOnDiskBuffer, textSectionInMemBuffer, sectionSizeOnDisk) != sectionSizeOnDisk)
                     {
-                        LOG_MSG("[TextSectionComparer] -> .TEXT section differs %wZ\n", imagePath);
+                        UkTraceEtw("TextSectionComparer", " .TEXT section differs %wZ", imagePath);
                     }
                     else
                     {
@@ -468,7 +287,7 @@ UkCompareTextSections(PVOID startContext)
                 }
                 else
                 {
-                    LOG_MSG("Failed to read image %wZ, Status: 0x%x\n", imagePathAbsolute, status);
+                    LOG_DBG("Failed to read image %wZ, Status: 0x%x", imagePathAbsolute, status);
                     goto Next;
                 }
 
@@ -503,3 +322,5 @@ UkCompareTextSections(PVOID startContext)
     KeWaitForSingleObject(&g_compareTextSectionsFinishedEvent, Executive, KernelMode, FALSE, NULL);
     PsTerminateSystemThread(STATUS_SUCCESS);
 }
+
+

@@ -1,7 +1,5 @@
-#pragma once
-
-#include <ntddk.h>
-#include "utils.hpp"
+#include "hiding.h"
+#include "meta.h"
 
 BOOLEAN g_hidingDetection = TRUE;
 KEVENT g_hidingDetectionFinishedEvent;
@@ -35,7 +33,7 @@ UkWalkSystemProcessThreads()
 
             if (!NT_SUCCESS(status))
             {
-                LOG_MSG("[PspCidTableScanner] -> Found hidden thread: PID: 0x%llx\n", threadId);
+                UkTraceEtw("PspCidTableScanner", "Found hidden thread: PID: 0x%llx", threadId);
             }
         }
     }
@@ -43,25 +41,22 @@ UkWalkSystemProcessThreads()
     return STATUS_SUCCESS;
 }
 
-/**
- * Scans for threads hidden from the PspCidTable
- */
 VOID
 UkDetectHiddenThreads(IN PVOID StartContext)
 {
-	UNREFERENCED_PARAMETER(StartContext);
+    UNREFERENCED_PARAMETER(StartContext);
 
-	KeInitializeEvent(&g_hidingDetectionFinishedEvent, NotificationEvent, FALSE);
+    KeInitializeEvent(&g_hidingDetectionFinishedEvent, NotificationEvent, FALSE);
 
-	do
-	{
-        LOG_MSG("Starting to look for hidden threads\n");
+    do
+    {
+        UkTraceEtw("PspCidTableScanner", "Starting to look for hidden threads");
         UkWalkSystemProcessThreads();
-		UkSleepMs(3000);
+        UkSleepMs(3000);
 
-	} while (g_hidingDetection);
+    } while (g_hidingDetection);
 
-	KeSetEvent(&g_hidingDetectionFinishedEvent, 0, TRUE);
+    KeSetEvent(&g_hidingDetectionFinishedEvent, 0, TRUE);
     KeWaitForSingleObject(&g_hidingDetectionFinishedEvent, Executive, KernelMode, FALSE, NULL);
-	PsTerminateSystemThread(STATUS_SUCCESS);
+    PsTerminateSystemThread(STATUS_SUCCESS);
 }

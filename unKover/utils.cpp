@@ -146,7 +146,7 @@ _strcmpi_w(
  * @return Pointer to KLDR_DATA_TABLE_ENTRY, or NULL if not found.
  */
 _IRQL_requires_same_
-_IRQL_requires_(PASSIVE_LEVEL)
+_IRQL_requires_max_(APC_LEVEL)
 PKLDR_DATA_TABLE_ENTRY
 UkGetDriverForAddress(
     _In_ ULONG_PTR address

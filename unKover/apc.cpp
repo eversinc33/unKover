@@ -9,7 +9,7 @@
  * @param[IN] SystemArgument2 Optional system argument.
  */
 _IRQL_requires_same_
-_IRQL_requires_(PASSIVE_LEVEL)
+_IRQL_requires_(APC_LEVEL)
 VOID
 UkNormalAPC(
     _In_opt_ PVOID NormalContext,
@@ -28,7 +28,7 @@ UkNormalAPC(
  * @param[IN] Apc APC object to free.
  */
 _IRQL_requires_same_
-_IRQL_requires_(PASSIVE_LEVEL)
+_IRQL_requires_(APC_LEVEL)
 VOID
 UkRundownAPC(
     _In_ PRKAPC Apc
@@ -47,7 +47,7 @@ UkRundownAPC(
  * @param[OUT] SystemArgument2 Receives system argument pointer.
  */
 _IRQL_requires_same_
-_IRQL_requires_(PASSIVE_LEVEL)
+_IRQL_requires_(APC_LEVEL)
 VOID 
 UkCaptureStackAPC(
     IN PKAPC Apc,

@@ -16,7 +16,7 @@ TRACELOGGING_DEFINE_PROVIDER(
  * @param[IN] Format printf-style ANSI format string.
  */
 _IRQL_requires_same_
-_IRQL_requires_(PASSIVE_LEVEL)
+_IRQL_requires_max_(APC_LEVEL)
 void
 UkTraceEtw(
     _In_ PCSTR Type,

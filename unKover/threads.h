@@ -2,15 +2,21 @@
 
 #include <ntifs.h>
 #include <ntddk.h>
-#include "utils.hpp"
+#include "utils.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-VOID UkScanSystemThreads(IN PVOID StartContext);
 
-/* globals */
+VOID
+UkScanSystemThreads(
+    IN PVOID StartContext
+);
+
+//
+// globals
+//
 extern BOOLEAN g_scanSystemThreads;
 extern KEVENT g_scanSystemThreadsFinishedEvent;
 

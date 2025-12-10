@@ -1,5 +1,5 @@
 #include "nmi.h"
-#include "utils.hpp"
+#include "utils.h"
 
 EXTERN_C VOID KeInitializeAffinityEx(PKAFFINITY_EX affinity);
 EXTERN_C VOID KeAddProcessorAffinityEx(PKAFFINITY_EX affinity, INT num);
@@ -14,8 +14,21 @@ HANDLE SendNMIThreadHandle = NULL;
 BOOLEAN g_sendNmis = TRUE;
 KEVENT g_sendNmisFinishedEvent;
 
+/**
+ * @brief NMI callback that captures minimal stack information per processor.
+ *
+ * @param[IN] context   Per-processor NMI_CONTEXT array.
+ * @param[IN] handled   Whether NMI was handled (unused).
+ *
+ * @return TRUE always.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 BOOLEAN 
-UkNmiCallback(PVOID context, BOOLEAN handled)
+UkNmiCallback(
+    _In_ PVOID context,
+    _In_ BOOLEAN handled
+)
 {
     UNREFERENCED_PARAMETER(handled);
 
@@ -34,8 +47,15 @@ UkNmiCallback(PVOID context, BOOLEAN handled)
     return TRUE;
 }
 
+/**
+ * @brief Analyze captured NMI data and emit ETW reports for suspicious frames.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
-UkAnalyzeNmiData()
+UkAnalyzeNmiData(
+    VOID
+)
 {
     for (auto core=0u; core<g_numCores; ++core)
     {
@@ -55,7 +75,9 @@ UkAnalyzeNmiData()
             continue;
         }
 
+        //
         // Check each stack frame for origin
+        //
         for (auto i = 0; i < nmiContext.framesCaptured; ++i)
         {
             ULONG_PTR addr = (ULONG_PTR)(nmiContext.stackFrames[i]);
@@ -65,7 +87,9 @@ UkAnalyzeNmiData()
             {
                 UkTraceEtw("NmiCallback", "Detected stack frame pointing to unbacked region. TID: %u @ 0x%llx", nmiContext.threadId, addr);
             
+                //
                 // Print stack frame TODO: clean this code
+                //
                 for (auto j = 0; j < nmiContext.framesCaptured; ++j)
                 {
                     ULONG_PTR address = (ULONG_PTR)nmiContext.stackFrames[j];
@@ -91,8 +115,17 @@ UkAnalyzeNmiData()
     }
 }
 
+/**
+ * @brief Allocate and initialize NMI resources and state.
+ *
+ * @return TRUE on success; FALSE otherwise.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 BOOLEAN 
-UkRegisterNmiCallbacks()
+UkRegisterNmiCallbacks(
+    VOID
+)
 {
     g_numCores = KeQueryActiveProcessorCountEx(0);
     ULONG nmiContextLength = g_numCores * sizeof(NMI_CONTEXT);
@@ -108,29 +141,49 @@ UkRegisterNmiCallbacks()
     return TRUE;
 }
 
+/**
+ * @brief Release NMI-related resources and deregister callback if present.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID 
-UkUnloadNMI()
+UkUnloadNMI(
+    VOID
+)
 {
     if (g_NmiCallbackHandle) KeDeregisterNmiCallback(g_NmiCallbackHandle);
     if (g_NmiAffinity) ExFreePoolWithTag(g_NmiAffinity, POOL_TAG);
     if (g_NmiContext) ExFreePoolWithTag(g_NmiContext, POOL_TAG);
 }
 
+/**
+ * @brief Send NMI to each processor and process captured data.
+ *
+ * @param[IN] StartContext unused.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
-UkSendNMI(IN PVOID StartContext)
+UkSendNMI(
+    _In_ PVOID StartContext
+)
 {
     UNREFERENCED_PARAMETER(StartContext);
 
     NTSTATUS NtStatus;
 
-    KeInitializeEvent(&g_sendNmisFinishedEvent, NotificationEvent, FALSE);
+    KeInitializeEvent(&g_sendNmisFinishedEvent, SynchronizationEvent, FALSE);
 
     do
     {
+        //
         // Register callback
+        //
         g_NmiCallbackHandle = KeRegisterNmiCallback(UkNmiCallback, g_NmiContext);
 
+        //
         // Fire NMI for each core
+        //
         for (auto core=0u; core<g_numCores; ++core)
         {
             KeInitializeAffinityEx(g_NmiAffinity);
@@ -139,11 +192,15 @@ UkSendNMI(IN PVOID StartContext)
             LOG_DBG("Sending NMI to analyze thread running on core %d...\n", core);
             HalSendNMI(g_NmiAffinity);
 
+            //
             // Sleep for 1 seconds between each NMI to allow completion
+            //
             UkSleepMs(1000);
         }
 
+        //
         // Unregister callback
+        //
         if (g_NmiCallbackHandle)
         {
             NtStatus = KeDeregisterNmiCallback(g_NmiCallbackHandle);
@@ -153,14 +210,15 @@ UkSendNMI(IN PVOID StartContext)
             }
         }
 
+        //
         // Analyze data
+        //
         UkAnalyzeNmiData();
 
         UkSleepMs(5000);
 
     } while (g_sendNmis);
 
-    KeSetEvent(&g_sendNmisFinishedEvent, 0, TRUE);
-    KeWaitForSingleObject(&g_sendNmisFinishedEvent, Executive, KernelMode, FALSE, NULL);
+    KeSetEvent(&g_sendNmisFinishedEvent, 0, FALSE);
     PsTerminateSystemThread(STATUS_SUCCESS);
 }

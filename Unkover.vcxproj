@@ -67,6 +67,7 @@
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
+    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -102,6 +103,7 @@
     <ClCompile Include="unKover\apc.cpp" />
     <ClCompile Include="unKover\deviceobjects.cpp" />
     <ClCompile Include="unKover\Driver.cpp" />
+    <ClCompile Include="unKover\handlers.cpp" />
     <ClCompile Include="unKover\hiding.cpp" />
     <ClCompile Include="unKover\meta.cpp" />
     <ClCompile Include="unKover\nmi.cpp" />
@@ -114,12 +116,13 @@
     <ClInclude Include="unKover\apc.h" />
     <ClInclude Include="unKover\deviceobjects.h" />
     <ClInclude Include="unKover\Driver.h" />
+    <ClInclude Include="unKover\handlers.h" />
     <ClInclude Include="unKover\hiding.h" />
     <ClInclude Include="unKover\meta.h" />
     <ClInclude Include="unKover\nmi.h" />
     <ClInclude Include="unKover\sectioncompare.h" />
     <ClInclude Include="unKover\threads.h" />
-    <ClInclude Include="unKover\utils.hpp" />
+    <ClInclude Include="unKover\utils.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />

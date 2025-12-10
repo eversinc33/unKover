@@ -3,7 +3,7 @@
 #include <ntifs.h>
 #include <ntddk.h>
 #include "meta.h"
-#include "utils.hpp"
+#include "utils.h"
 
 #define STACK_CAPTURE_SIZE 32
 
@@ -31,11 +31,31 @@ EXTERN_C VOID KeInitializeAffinityEx(PKAFFINITY_EX affinity);
 EXTERN_C VOID KeAddProcessorAffinityEx(PKAFFINITY_EX affinity, INT num);
 EXTERN_C VOID HalSendNMI(PKAFFINITY_EX affinity);
 
-BOOLEAN UkRegisterNmiCallbacks();
-VOID UkUnloadNMI();
-VOID UkSendNMI(IN PVOID StartContext);
-VOID UkAnalyzeNmiData();
-BOOLEAN UkNmiCallback(PVOID context, BOOLEAN handled);
+BOOLEAN
+UkRegisterNmiCallbacks(
+    VOID
+);
+
+VOID
+UkUnloadNMI(
+    VOID
+);
+
+VOID
+UkSendNMI(
+    _In_ PVOID StartContext
+);
+
+VOID
+UkAnalyzeNmiData(
+    VOID
+);
+
+BOOLEAN
+UkNmiCallback(
+    _In_ PVOID context,
+    _In_ BOOLEAN handled
+);
 
 /* globals */
 extern ULONG g_numCores;

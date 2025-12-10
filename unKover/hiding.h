@@ -2,13 +2,26 @@
 
 #include <ntifs.h>
 #include <ntddk.h>
-#include "utils.hpp"
+#include "utils.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-VOID UkDetectHiddenThreads(IN PVOID StartContext);
+ULONG
+UkGetThreadListEntryOffset(
+    ULONG buildNumber
+);
+
+NTSTATUS
+UkWalkSystemProcessThreads(
+    VOID
+);
+
+VOID
+UkDetectHiddenThreads(
+    IN PVOID StartContext
+);
 
 /* globals */
 extern BOOLEAN g_hidingDetection;

@@ -1,17 +1,25 @@
 #include <ntifs.h>
 #include <ntddk.h>
 #include "meta.h"
-#include "utils.hpp"
+#include "utils.h"
 
 BOOLEAN g_doAPCStackWalk = TRUE;
 KEVENT g_kernelApcSyncEvent;
 KEVENT g_rundownApcSyncEvent;
 KEVENT g_apcFinishedEvent;
 
+/**
+ * @brief Remove common driver path prefixes from the input string.
+ *
+ * @param[IN]  InputString  Original UNICODE string.
+ * @param[OUT] OutputString Result string without prefix.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
 UkStripDriverPrefix(
-    PUNICODE_STRING InputString,
-    PUNICODE_STRING OutputString
+    _In_ PUNICODE_STRING InputString,
+    _Out_ PUNICODE_STRING OutputString
 )
 {
     UNICODE_STRING prefix = RTL_CONSTANT_STRING(L"\\Driver");
@@ -28,6 +36,16 @@ UkStripDriverPrefix(
     }
 }
 
+/**
+ * @brief Resolve driver image path from a given driver name.
+ *
+ * @param[IN]  DriverName Driver base name.
+ * @param[OUT] ImagePath  Full image path.
+ *
+ * @return NTSTATUS.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 UkGetDriverImagePath(
     _In_ PUNICODE_STRING DriverName,
@@ -83,8 +101,21 @@ Cleanup:
     return status;
 }
 
+/**
+ * @brief Case-insensitive wide-character strcmp.
+ *
+ * @param[IN] s1 First string.
+ * @param[IN] s2 Second string.
+ *
+ * @return Comparison result.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 INT
-_strcmpi_w(const wchar_t* s1, const wchar_t* s2)
+_strcmpi_w(
+    _In_ const wchar_t* s1,
+    _In_ const wchar_t* s2
+)
 {
     WCHAR c1, c2;
 
@@ -107,8 +138,19 @@ _strcmpi_w(const wchar_t* s1, const wchar_t* s2)
     return (INT)(c1 - c2);
 }
 
+/**
+ * @brief Get the driver module corresponding to a virtual address.
+ *
+ * @param[IN] address Target virtual address.
+ *
+ * @return Pointer to KLDR_DATA_TABLE_ENTRY, or NULL if not found.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 PKLDR_DATA_TABLE_ENTRY
-UkGetDriverForAddress(ULONG_PTR address)
+UkGetDriverForAddress(
+    _In_ ULONG_PTR address
+)
 {
     if (!address || g_drvObj == NULL)
     {
@@ -131,8 +173,19 @@ UkGetDriverForAddress(ULONG_PTR address)
     return NULL;
 }
 
+/**
+ * @brief Query a thread's start address.
+ *
+ * @param[IN] ThreadObj ETHREAD object pointer.
+ *
+ * @return Start address as ULONG_PTR.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 ULONG_PTR
-UkGetThreadStartAddress(PETHREAD ThreadObj)
+UkGetThreadStartAddress(
+    _In_ PETHREAD ThreadObj
+)
 {
     HANDLE hThread;
     ULONG_PTR startAddress = 0;
@@ -162,8 +215,17 @@ UkGetThreadStartAddress(PETHREAD ThreadObj)
     return startAddress;
 }
 
+/**
+ * @brief Sleep the current thread for a given number of milliseconds.
+ *
+ * @param[IN] milliseconds Delay duration.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
-UkSleepMs(INT milliseconds)
+UkSleepMs(
+    INT milliseconds
+)
 {
     LARGE_INTEGER interval;
     interval.QuadPart = -1 * (LONGLONG)(milliseconds * 10000);

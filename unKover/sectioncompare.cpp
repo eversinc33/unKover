@@ -5,14 +5,25 @@
 
 #include "sectioncompare.h"
 #include "meta.h"
+#include "utils.h"
 
 BOOLEAN g_compareTextSections = TRUE;
 KEVENT g_compareTextSectionsFinishedEvent;
 
+/**
+ * @brief If OriginalString starts with "System32", prepend "\\SystemRoot\\"; otherwise copy as-is.
+ *
+ * @param[IN]  OriginalString Source string.
+ * @param[OUT] ResultString   Destination string.
+ *
+ * @return NTSTATUS.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 UkPrependWindowsPathIfStartsWithSystem32(
-    PUNICODE_STRING OriginalString,
-    PUNICODE_STRING ResultString
+    _In_ PUNICODE_STRING OriginalString,
+    _Out_ PUNICODE_STRING ResultString
 )
 {
     UNICODE_STRING system32 = RTL_CONSTANT_STRING(L"System32");
@@ -54,11 +65,22 @@ UkPrependWindowsPathIfStartsWithSystem32(
     return STATUS_SUCCESS;
 }
 
+/**
+ * @brief Read entire file contents into memory.
+ *
+ * @param[IN]  FileName   File name.
+ * @param[OUT] FileBuffer Allocated buffer with contents.
+ * @param[OUT] FileSize   Size in bytes.
+ *
+ * @return NTSTATUS.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 UkReadFileToMemory(
-    PUNICODE_STRING FileName,
-    PVOID* FileBuffer,
-    ULONG* FileSize
+    _In_ PUNICODE_STRING FileName,
+    _Out_ PVOID* FileBuffer,
+    _Out_ ULONG* FileSize
 )
 {
     NTSTATUS status;
@@ -89,14 +111,18 @@ UkReadFileToMemory(
         goto Cleanup;
     }
 
+    //
     // get file size
+    //
     status = ZwQueryInformationFile(fileHandle, &ioStatusBlock, &fileStandardInformation, sizeof(fileStandardInformation), FileStandardInformation);
     if (!NT_SUCCESS(status))
     {
         goto Cleanup;
     }
 
+    //
     // allocate memory
+    //
     buffer = ExAllocatePoolWithTag(NonPagedPool, fileStandardInformation.EndOfFile.LowPart, POOL_TAG);
     if (buffer == NULL)
     {
@@ -113,7 +139,9 @@ UkReadFileToMemory(
     *FileBuffer = buffer;
     *FileSize = fileStandardInformation.EndOfFile.LowPart;
     if (fileHandle) { ZwClose(fileHandle); }
+    //
     // do not free the buffer yet
+    //
     return status;
 
 Cleanup:
@@ -122,6 +150,18 @@ Cleanup:
     return status;
 }
 
+/**
+ * @brief Retrieve a specific section from a PE image buffer.
+ *
+ * @param[IN]  sectionName   Section name.
+ * @param[IN]  peBuffer      PE image buffer.
+ * @param[OUT] sectionBuffer Allocated buffer with section contents.
+ * @param[OUT] size          Size of section.
+ *
+ * @return NTSTATUS.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 NTSTATUS
 UkGetPeSection(
     IN PCHAR sectionName,
@@ -170,8 +210,17 @@ UkGetPeSection(
     return STATUS_NOT_FOUND;
 }
 
+/**
+ * @brief Compare .text sections of loaded drivers with their on-disk counterparts.
+ *
+ * @param[IN] StartContext Optional context parameter.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
-UkCompareTextSections(PVOID startContext)
+UkCompareTextSections(
+    PVOID startContext
+)
 {
     UNREFERENCED_PARAMETER(startContext);
     NTSTATUS status;
@@ -180,16 +229,18 @@ UkCompareTextSections(PVOID startContext)
     OBJECT_ATTRIBUTES attributes;
     UNICODE_STRING directoryName = RTL_CONSTANT_STRING(L"\\Driver");
 
-    KeInitializeEvent(&g_compareTextSectionsFinishedEvent, NotificationEvent, FALSE);
+    KeInitializeEvent(&g_compareTextSectionsFinishedEvent, SynchronizationEvent, FALSE);
 
-    while (g_compareTextSections) 
+    while (g_compareTextSections)
     {
-        // Get Handle to \\Driver directory
+        // 
+        // Get Handle to \Driver directory
+        //
         InitializeObjectAttributes(&attributes, &directoryName, OBJ_CASE_INSENSITIVE, NULL, NULL);
         status = ZwOpenDirectoryObject(&handle, DIRECTORY_ALL_ACCESS, &attributes);
         if (!NT_SUCCESS(status))
         {
-            LOG_DBG("Couldnt get \\Driver directory handle");
+            LOG_DBG("Couldnt get \\Driver directory handle\n");
             return;
         }
 
@@ -197,7 +248,7 @@ UkCompareTextSections(PVOID startContext)
         if (!NT_SUCCESS(status))
         {
             ZwClose(handle);
-            LOG_DBG("Couldnt get \\Driver directory object from handle");
+            LOG_DBG("Couldnt get \\Driver directory object from handle\n");
             return;
         }
 
@@ -206,7 +257,9 @@ UkCompareTextSections(PVOID startContext)
 
         UkTraceEtw("TextSectionComparer", "Scanning DriverObjects...");
 
+        // 
         // Lock for the hashbucket
+        //
         KeEnterCriticalRegion();
         ExAcquirePushLockExclusiveEx(&hashBucketLock, 0);
 
@@ -239,10 +292,14 @@ UkCompareTextSections(PVOID startContext)
                 driverServiceName.Length = 0;
                 driverServiceName.MaximumLength = sizeof(serviceNameBuffer);
 
+                // 
                 // Get driver service name to lookup path to binary
+                //
                 UkStripDriverPrefix(&driver->DriverName, &driverServiceName);
 
+                // 
                 // get the image path
+                //
                 NTSTATUS status = UkGetDriverImagePath(&driverServiceName, &imagePath);
                 if (NT_SUCCESS(status))
                 {
@@ -263,12 +320,16 @@ UkCompareTextSections(PVOID startContext)
                     goto Next;
                 }
 
+                // 
                 // read the image and compare it to the in memory image
+                //
                 ULONG fileSize = 0;
                 status = UkReadFileToMemory(&imagePathAbsolute, &fileBuffer, &fileSize);
                 if (NT_SUCCESS(status))
                 {
+                    //
                     // compare .text sections
+                    //
                     if (!NT_SUCCESS(UkGetPeSection(".text", fileBuffer, textSectionOnDiskBuffer, &sectionSizeOnDisk))
                         || !NT_SUCCESS(UkGetPeSection(".text", driver->DriverStart, textSectionInMemBuffer, &sectionSizeInMem))
                         || !textSectionOnDiskBuffer || !textSectionInMemBuffer)
@@ -318,9 +379,6 @@ UkCompareTextSections(PVOID startContext)
 
     } while (g_compareTextSections);
 
-    KeSetEvent(&g_compareTextSectionsFinishedEvent, 0, TRUE);
-    KeWaitForSingleObject(&g_compareTextSectionsFinishedEvent, Executive, KernelMode, FALSE, NULL);
+    KeSetEvent(&g_compareTextSectionsFinishedEvent, 0, FALSE);
     PsTerminateSystemThread(STATUS_SUCCESS);
 }
-
-

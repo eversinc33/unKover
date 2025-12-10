@@ -54,9 +54,12 @@
     <ClCompile Include="unKover\tracing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="unKover\handlers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="unKover\utils.hpp">
+    <ClInclude Include="unKover\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="unKover\meta.h">
@@ -81,6 +84,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="unKover\Driver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="unKover\handlers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

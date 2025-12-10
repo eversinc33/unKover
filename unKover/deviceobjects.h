@@ -3,7 +3,7 @@
 #include <ntifs.h>
 #include <ntddk.h>
 #include "meta.h"
-#include "utils.hpp"
+#include "utils.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,11 +29,6 @@ EXTERN_C NTSTATUS ObReferenceObjectByName(
     IN OUT PVOID ParseContext,
     OUT PVOID* ObjectPtr
 );
-
-typedef struct _OBJECT_DIRECTORY_INFORMATION {
-    UNICODE_STRING Name;
-    UNICODE_STRING TypeName;
-} OBJECT_DIRECTORY_INFORMATION, *POBJECT_DIRECTORY_INFORMATION;
 
 typedef struct _OBJECT_TYPE_INITIALIZER
 {

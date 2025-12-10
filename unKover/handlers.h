@@ -2,21 +2,22 @@
 
 #include <ntifs.h>
 #include <ntddk.h>
-#include "deviceobjects.h"
 #include "utils.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID
-UkCompareTextSections(
-    IN PVOID StartContext
+UkCheckHandlers(
+    _In_ PVOID StartContext
 );
 
 /* globals */
-extern BOOLEAN g_compareTextSections;
-extern KEVENT g_compareTextSectionsFinishedEvent;
+extern BOOLEAN g_checkHandlers;
+extern KEVENT g_checkHandlersFinishedEvent;
 
 #ifdef __cplusplus
 }

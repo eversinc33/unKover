@@ -121,7 +121,7 @@
     <ClInclude Include="unKover\deviceobjects.h" />
     <ClInclude Include="unKover\sectioncompare.h" />
     <ClInclude Include="unKover\hiding.h" />
-    <ClInclude Include="unKover\utils.hpp" />
+    <ClInclude Include="unKover\utils.h" />
   </ItemGroup>
 
   <ItemGroup>

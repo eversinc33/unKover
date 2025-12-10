@@ -1,5 +1,10 @@
-x64/
-UnKover/x64/
 .vs/
-UnKover/.vs/
+x64/
 testEnvironments.json
+unKover/.vs/
+unKover/x64/
+Client/.vs/
+Client/x64/
+Client/obj/
+Client/bin
+packages/

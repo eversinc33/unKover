@@ -4,12 +4,21 @@ BOOLEAN g_scanDriverObjects = TRUE;
 KEVENT g_scanDriverObjectsFinishedEvent;
 ULONG_PTR g_hashBucketLock = NULL;
 
+/**
+ * @brief Scan driver objects in object manager and report suspicious pointers.
+ *
+ * @param[IN] StartContext Optional start context.
+ */
+_IRQL_requires_same_
+_IRQL_requires_(PASSIVE_LEVEL)
 VOID 
-UkCheckDriverObjects(IN PVOID StartContext)
+UkCheckDriverObjects(
+    _In_ PVOID StartContext
+)
 {
     UNREFERENCED_PARAMETER(StartContext);
 
-    KeInitializeEvent(&g_scanDriverObjectsFinishedEvent, NotificationEvent, FALSE);
+    KeInitializeEvent(&g_scanDriverObjectsFinishedEvent, SynchronizationEvent, FALSE);
 
     NTSTATUS status;
     PVOID directory;
@@ -17,7 +26,9 @@ UkCheckDriverObjects(IN PVOID StartContext)
     OBJECT_ATTRIBUTES attributes;
     UNICODE_STRING directoryName = RTL_CONSTANT_STRING(L"\\Driver");
 
+    //
     // Get Handle to \\Driver directory
+    //
     InitializeObjectAttributes(&attributes, &directoryName, OBJ_CASE_INSENSITIVE, NULL, NULL);
     status = ZwOpenDirectoryObject(&handle, DIRECTORY_ALL_ACCESS, &attributes);
     if (!NT_SUCCESS(status))
@@ -41,7 +52,9 @@ UkCheckDriverObjects(IN PVOID StartContext)
     {
         UkTraceEtw("DeviceObjectScanner", "Scanning DriverObjects...");
 
+        //
         // Lock for the hashbucket
+        //
         KeEnterCriticalRegion(); 
         ExAcquirePushLockExclusiveEx((PEX_PUSH_LOCK)&g_hashBucketLock, 0);
 
@@ -57,7 +70,9 @@ UkCheckDriverObjects(IN PVOID StartContext)
             {
                 PDRIVER_OBJECT driver = (PDRIVER_OBJECT)entry->Object;
 
+                //
                 // Check memory of DriverStart
+                //
                 if (UkGetDriverForAddress((ULONG_PTR)driver->DriverStart) == NULL)
                 {
                     UkTraceEtw("DeviceObjectScanner", "Detected DriverObject.DriverStart pointing to unbacked or invalid region %ws @ 0x%llx",
@@ -88,7 +103,6 @@ UkCheckDriverObjects(IN PVOID StartContext)
     ZwClose(handle);    
 
     KeSetEvent(&g_scanDriverObjectsFinishedEvent, 0, TRUE);
-    KeWaitForSingleObject(&g_scanDriverObjectsFinishedEvent, Executive, KernelMode, FALSE, NULL);
 
     PsTerminateSystemThread(STATUS_SUCCESS);
 }

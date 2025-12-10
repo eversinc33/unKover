@@ -19,7 +19,8 @@ Techniques implemented:
 * System thread analysis: Periodically check all system threads for start-addresses pointing to unbacked memory.
 * Driver Object analysis: Periodically check all driver objects registered on the system, and check if their DriverEntry points to unbacked memory.
 * .text section comparison: Periodically check drivers for .text section thats differ in-mem vs on-disk, to detect driver "stomping"
-* detecting threads removed from the `PspCidTable`
+* Detecting threads removed from the `PspCidTable`
+* Detecting hooked Major Function Handlers pointing to unbacked memory
 
 <p align="center">
 <img src="./img/detect.jpg" alt="unKover output"/>
@@ -43,7 +44,7 @@ sc.exe create Unkover binPath= "C:\path\to\Unkover.sys" type= kernel start= dema
 sc.exe start Unkover
 ```
 
-Afterwards, output will appear in the debug logs (view with e.g. WinDbg or DebugView)
+Afterwards, you can start the Client to view the logs.
 
 ### Credits
 

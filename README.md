@@ -1,7 +1,5 @@
 # unKover
 
-*UPDATE: unKover has since been integrated in my EDR [NIGHTWATCH](https://github.com/eversinc33/NIGHTWATCH) and all development will continue there*
-
 Windows anti-rootkit driver that can detect drivers mapped to kernel memory. Think [Moneta](https://github.com/forrest-orr/moneta), but for the kernel (obviously this is a simplified comparison). Additionally detects hidden threads as of the latest version.
 
 The idea is to have a small & concise anti-rootkit to aid you (the rootkit dev) in honing your rootkits evasion abilities while also showcasing detection vectors with minimal FP rate that can detect many of the openly available driver mapper + rootkit combinations. 
@@ -23,7 +21,7 @@ Techniques implemented:
 * Detecting hooked Major Function Handlers pointing to unbacked memory
 
 <p align="center">
-<img src="./img/detect.jpg" alt="unKover output"/>
+<img src="./img/gui.png" alt="unKover output"/>
 </p>
 
 ## Installation
@@ -49,3 +47,4 @@ Afterwards, you can start the Client to view the logs.
 ### Credits
 
 * DeviceObject scanning code partly taken from https://github.com/not-wlan/driver-hijack
+

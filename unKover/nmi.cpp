@@ -23,7 +23,6 @@ KEVENT g_sendNmisFinishedEvent;
  * @return TRUE always.
  */
 _IRQL_requires_same_
-_IRQL_requires_(PASSIVE_LEVEL)
 BOOLEAN 
 UkNmiCallback(
     _In_ PVOID context,

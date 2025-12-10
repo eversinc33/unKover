@@ -1,0 +1,49 @@
+﻿<Window x:Class="Client.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Unkover Trace Viewer" Height="600" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Controls row: align filter TextBox with second column (Message). -->
+        <Grid Grid.Row="0" Margin="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: Show Logs checkbox -->
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Grid.Column="0">
+                <CheckBox x:Name="ShowLogsCheckBox"
+                          Content="Show logs"
+                          IsChecked="True"
+                          Checked="ShowLogsCheckBox_Checked"
+                          Unchecked="ShowLogsCheckBox_Unchecked"/>
+            </StackPanel>
+
+            <!-- Right: Filter textbox aligned with Message column -->
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Filter:" Margin="0,0,8,0"/>
+                <TextBox x:Name="FilterTextBox"
+                         Width="300"
+                         ToolTip="Type to filter Type/Message"
+                         TextChanged="FilterTextBox_TextChanged"/>
+            </StackPanel>
+        </Grid>
+
+        <DataGrid x:Name="TraceGrid"
+                  Grid.Row="1"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="150"/>
+                <DataGridTextColumn Header="Message" Binding="{Binding Message}" Width="*"/>
+                <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="180"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>

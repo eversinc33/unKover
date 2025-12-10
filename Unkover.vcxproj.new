@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -67,7 +67,6 @@
   <PropertyGroup />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
-    <Inf2CatUseLocalTime>true</Inf2CatUseLocalTime>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebuggerFlavor>DbgengKernelDebugger</DebuggerFlavor>
@@ -99,35 +98,36 @@
   <ItemGroup>
     <FilesToPackage Include="$(TargetPath)" />
   </ItemGroup>
+
+  <!-- Sources -->
   <ItemGroup>
-    <ClCompile Include="unKover\apc.cpp" />
-    <ClCompile Include="unKover\deviceobjects.cpp" />
     <ClCompile Include="unKover\Driver.cpp" />
-    <ClCompile Include="unKover\handlers.cpp" />
-    <ClCompile Include="unKover\hiding.cpp" />
     <ClCompile Include="unKover\meta.cpp" />
     <ClCompile Include="unKover\nmi.cpp" />
-    <ClCompile Include="unKover\sectioncompare.cpp" />
     <ClCompile Include="unKover\threads.cpp" />
-    <ClCompile Include="unKover\tracing.cpp" />
-    <ClCompile Include="unKover\utils.cpp" />
+    <ClCompile Include="unKover\apc.cpp" />
+    <ClCompile Include="unKover\deviceobjects.cpp" />
+    <ClCompile Include="unKover\sectioncompare.cpp" />
+    <ClCompile Include="unKover\hiding.cpp" />
   </ItemGroup>
+
+  <!-- Headers -->
   <ItemGroup>
-    <ClInclude Include="unKover\apc.h" />
-    <ClInclude Include="unKover\deviceobjects.h" />
     <ClInclude Include="unKover\Driver.h" />
-    <ClInclude Include="unKover\handlers.h" />
-    <ClInclude Include="unKover\hiding.h" />
     <ClInclude Include="unKover\meta.h" />
     <ClInclude Include="unKover\nmi.h" />
-    <ClInclude Include="unKover\sectioncompare.h" />
     <ClInclude Include="unKover\threads.h" />
+    <ClInclude Include="unKover\apc.h" />
+    <ClInclude Include="unKover\deviceobjects.h" />
+    <ClInclude Include="unKover\sectioncompare.h" />
+    <ClInclude Include="unKover\hiding.h" />
     <ClInclude Include="unKover\utils.h" />
   </ItemGroup>
+
   <ItemGroup>
     <None Include="README.md" />
-    <None Include="Unkover.vcxproj.new" />
   </ItemGroup>
+
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -87,7 +87,23 @@ UkGetDriverImagePath(
     status = ZwQueryValueKey(keyHandle, &valueName, KeyValuePartialInformation, keyValueInfo, keyValueInfoSize, &resultLength);
     if (NT_SUCCESS(status))
     {
-        RtlInitUnicodeString(ImagePath, (PCWSTR)keyValueInfo->Data);
+        //
+        // keyValueInfo is freed in the Cleanup block below, so we must copy the
+        // string data into a dedicated buffer rather than pointing directly into
+        // keyValueInfo->Data (which would leave a dangling pointer).
+        //
+        USHORT dataBytes = (USHORT)(resultLength - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data));
+        PWCH imagePathBuffer = (PWCH)ExAllocatePoolWithTag(NonPagedPool, dataBytes, POOL_TAG);
+        if (!imagePathBuffer)
+        {
+            status = STATUS_INSUFFICIENT_RESOURCES;
+            goto Cleanup;
+        }
+
+        RtlCopyMemory(imagePathBuffer, keyValueInfo->Data, dataBytes);
+        ImagePath->Buffer        = imagePathBuffer;
+        ImagePath->Length        = dataBytes - sizeof(WCHAR); // exclude NUL terminator
+        ImagePath->MaximumLength = dataBytes;
     }
     else
     {
